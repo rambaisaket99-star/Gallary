@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Gallery</title>
+<style>
+:root{ --line:#000; }
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{
+  margin:0; padding:0; width:100%; overflow-x:hidden; background:#fff; color:#000;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{ font-family:inherit; color:#000; cursor:pointer; }
+
+header{
+  position:sticky; top:0; z-index:20; background:#fff;
+  border-bottom:1.5px solid var(--line);
+  padding:12px 14px; padding-top:calc(12px + env(safe-area-inset-top));
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.brand{ border:1.5px solid var(--line); border-radius:999px; padding:9px 20px; font-weight:800; font-size:15px; letter-spacing:.5px; }
+.count{ border:1.5px solid var(--line); border-radius:999px; padding:9px 16px; font-size:12px; font-weight:700; }
+
+main{ max-width:620px; margin:0 auto; padding:16px 14px calc(170px + env(safe-area-inset-bottom)); }
+#feed{ display:flex; flex-direction:column; gap:16px; }
+
+.card{ border:1.5px solid var(--line); border-radius:28px; overflow:hidden; background:#fff; }
+.media{ width:100%; background:#fff; }
+.media img{ display:block; width:100%; height:auto; max-height:72vh; object-fit:contain; }
+.media video{ display:block; width:100%; max-height:72vh; background:#fff; }
+.fileph{
+  padding:52px 16px; text-align:center; font-weight:800; font-size:15px; letter-spacing:3px;
+  border-bottom:1.5px solid var(--line);
+}
+
+.info{ padding:14px 12px 12px; display:flex; flex-direction:column; gap:10px; border-top:1.5px solid var(--line); }
+.fname{ font-size:14.5px; font-weight:800; word-break:break-all; line-height:1.35; }
+.fsize{ font-size:11.5px; font-weight:600; opacity:.55; }
+.row{ display:flex; gap:10px; }
+.pill{
+  flex:1; border:1.5px solid var(--line); border-radius:999px; background:#fff;
+  padding:12px 14px; font-size:13.5px; font-weight:800; transition:background .12s,color .12s;
+  user-select:none;
+}
+.pill:active{ background:#000; color:#fff; }
+
+#empty{
+  display:none; border:1.5px dashed var(--line); border-radius:28px;
+  padding:44px 20px; text-align:center; font-weight:800; font-size:14px; line-height:1.7;
+}
+
+#addBtn{
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  width:88px; height:88px; border-radius:999px;
+  border:2.5px solid var(--line); background:#fff;
+  display:flex; align-items:center; justify-content:center;
+  z-index:40; box-shadow:0 10px 26px rgba(0,0,0,.18);
+  transition:transform .12s;
+}
+#addBtn:active{ transform:translateX(-50%) scale(.93); }
+
+#prog{
+  display:none; position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(124px + env(safe-area-inset-bottom));
+  z-index:40; border:1.5px solid var(--line); border-radius:999px; background:#fff;
+  padding:12px 22px; font-size:12.5px; font-weight:800;
+  max-width:88vw; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 6px 18px rgba(0,0,0,.12);
+}
+
+#toast{
+  display:none; position:fixed; left:50%; transform:translateX(-50%);
+  top:calc(14px + env(safe-area-inset-top));
+  z-index:60; border:1.5px solid var(--line); border-radius:999px; background:#fff;
+  padding:12px 22px; font-size:12.5px; font-weight:800; max-width:90vw; text-align:center;
+  box-shadow:0 8px 22px rgba(0,0,0,.15);
+}
+
+#setup{ display:none; max-width:620px; margin:0 auto; padding:18px 16px 60px; }
+.setupBox{ border:1.5px solid var(--line); border-radius:28px; padding:22px; }
+.setupBox h2{ margin:0 0 14px; font-size:17px; font-weight:800; }
+.setupBox p,.setupBox li{ font-size:13.5px; line-height:1.8; font-weight:600; }
+.setupBox ol{ padding-left:20px; margin:12px 0; }
+.setupBox code{ font-size:11.5px; word-break:break-all; background:#f4f4f4; padding:2px 5px; border-radius:5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">GALLERY</div>
+  <div class="count" id="count">0 items</div>
+</header>
+
+<main>
+  <div id="empty">Abhi kuch upload nahi hua.<br>Neeche wale bade <b>+</b> button se upload karo.</div>
+  <div id="feed"></div>
+</main>
+
+<div id="setup">
+  <div class="setupBox">
+    <h2>⚡ Ek baar setup karo (3 minute)</h2>
+    <ol>
+      <li><b>console.firebase.google.com</b> kholo → <b>Add project</b> → naam do → Create</li>
+      <li>Left menu → <b>Build → Firestore Database</b> → Create → <b>Start in test mode</b> → Enable</li>
+      <li>Left menu → <b>Build → Storage</b> → Get started → test mode → Done</li>
+      <li>⚙️ Project settings → <b>Your apps</b> → <b>&lt;/&gt; Web</b> → register → jo <b>firebaseConfig</b> mile, wo is file ke top pe paste kar do</li>
+    </ol>
+    <p><b>Firestore Rules:</b></p>
+    <p><code>rules_version = '2';<br>
+    service cloud.firestore {<br>
+    &nbsp;&nbsp;match /databases/{database}/documents {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;match /files/{doc} { allow read, write: if true; }<br>
+    &nbsp;&nbsp;}<br>
+    }</code></p>
+    <p><b>Storage Rules:</b></p>
+    <p><code>rules_version = '2';<br>
+    service firebase.storage {<br>
+    &nbsp;&nbsp;match /b/{bucket}/o {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;match /uploads/{file=**} { allow read, write: if true; }<br>
+    &nbsp;&nbsp;}<br>
+    }</code></p>
+    <p>Phir file ko <b>netlify.com/drop</b> pe drag karo → link mil jayega → wahi public link sabko share karo.</p>
+  </div>
+</div>
+
+<div id="prog"></div>
+<div id="toast"></div>
+
+<button id="addBtn" aria-label="Upload">
+  <svg width="44" height="44" viewBox="0 0 40 40">
+    <path d="M20 6v28M6 20h28" stroke="#000" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+</button>
+
+<input id="fileInput" type="file" multiple accept="*/*" style="display:none">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject }
+  from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+/* ============================================================
+   YAHAN APNA FIREBASE CONFIG PASTE KARO (6 values)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_AUTH_DOMAIN",
+  projectId: "PASTE_PROJECT_ID",
+  storageBucket: "PASTE_STORAGE_BUCKET",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId: "PASTE_APP_ID"
+};
+/* ============================================================ */
+
+const READY = !JSON.stringify(firebaseConfig).includes("PASTE");
+
+const feedEl  = document.getElementById('feed');
+const emptyEl = document.getElementById('empty');
+const countEl = document.getElementById('count');
+const addBtn  = document.getElementById('addBtn');
+const fileIn  = document.getElementById('fileInput');
+const progEl  = document.getElementById('prog');
+const toastEl = document.getElementById('toast');
+const setupEl = document.getElementById('setup');
+
+let db, storage;
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.style.display = 'none', 2800);
+}
+function fmtSize(b){
+  if(!b && b !== 0) return '';
+  const u = ['B','KB','MB','GB']; let n = b, i = 0;
+  while(n >= 1024 && i < u.length-1){ n /= 1024; i++; }
+  return (i === 0 ? n : n.toFixed(n < 10 ? 1 : 0)) + ' ' + u[i];
+}
+function showProg(t){ progEl.style.display = 'block'; progEl.textContent = t; }
+function hideProg(){ progEl.style.display = 'none'; }
+
+if(!READY){
+  setupEl.style.display = 'block';
+  addBtn.style.display = 'none';
+} else {
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  start();
+}
+
+function start(){
+  const q = query(collection(db, 'files'), orderBy('createdAt', 'desc'));
+  onSnapshot(q, snap => {
+    feedEl.innerHTML = '';
+    countEl.textContent = snap.size + (snap.size === 1 ? ' item' : ' items');
+
+    if(snap.empty){
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    snap.forEach(d => feedEl.appendChild(cardEl({ id: d.id, ...d.data() })));
+  }, err => {
+    console.error(err);
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'Data load nahi hua. Firestore Rules check karo.';
+  });
+}
+
+function cardEl(it){
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const media = document.createElement('div');
+  media.className = 'media';
+  const type = it.type || '';
+
+  if(type.indexOf('image/') === 0){
+    const img = document.createElement('img');
+    img.src = it.url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+    media.appendChild(img);
+  } else if(type.indexOf('video/') === 0){
+    const v = document.createElement('video');
+    v.src = it.url; v.controls = true; v.playsInline = true; v.preload = 'metadata';
+    media.appendChild(v);
+  } else {
+    const ph = document.createElement('div');
+    ph.className = 'fileph';
+    ph.textContent = 'FILE';
+    media.appendChild(ph);
+  }
+  card.appendChild(media);
+
+  const info = document.createElement('div');
+  info.className = 'info';
+
+  const name = document.createElement('div');
+  name.className = 'fname';
+  name.textContent = it.name || 'file';
+  info.appendChild(name);
+
+  const meta = document.createElement('div');
+  meta.className = 'fsize';
+  meta.textContent = fmtSize(it.size) + '  •  ' + new Date(it.createdAt || Date.now()).toLocaleString();
+  info.appendChild(meta);
+
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const dl = document.createElement('button');
+  dl.type = 'button'; dl.className = 'pill'; dl.textContent = 'Download';
+  dl.addEventListener('click', () => download(it));
+
+  const del = document.createElement('button');
+  del.type = 'button'; del.className = 'pill'; del.textContent = 'Delete';
+  del.addEventListener('click', () => remove(it));
+
+  row.appendChild(dl);
+  row.appendChild(del);
+  info.appendChild(row);
+  card.appendChild(info);
+
+  return card;
+}
+
+addBtn.addEventListener('click', () => fileIn.click());
+fileIn.addEventListener('change', e => {
+  handleFiles(e.target.files);
+  fileIn.value = '';
+});
+
+async function handleFiles(list){
+  if(!READY){ toast('Pehle Firebase config bharo'); return; }
+  const files = Array.from(list || []).filter(Boolean);
+  if(!files.length) return;
+
+  let done = 0;
+  for(const f of files){
+    done++;
+    try{
+      await uploadOne(f, done, files.length);
+    }catch(err){
+      console.error(err);
+      hideProg();
+      toast('Upload fail: ' + (f.name || 'file'));
+    }
+  }
+  hideProg();
+  toast(files.length > 1 ? (files.length + ' files upload ho gaye') : 'Upload ho gaya ✅');
+}
+
+function uploadOne(file, idx, total){
+  return new Promise((resolve, reject) => {
+    const clean = (file.name || 'file').replace(/[^\w.\-]+/g, '_');
+    const path = 'uploads/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '_' + clean;
+    const r = ref(storage, path);
+
+    const task = uploadBytesResumable(r, file, {
+      contentType: file.type || 'application/octet-stream'
+    });
+
+    showProg('Upload ' + idx + '/' + total + ' — 0%');
+
+    task.on('state_changed',
+      s => {
+        const p = s.totalBytes ? Math.round(s.bytesTransferred / s.totalBytes * 100) : 0;
+        showProg('Upload ' + idx + '/' + total + ' — ' + p + '%');
+      },
+      err => { hideProg(); reject(err); },
+      async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        await addDoc(collection(db, 'files'), {
+          url,
+          path,
+          name: file.name || 'file',
+          type: file.type || '',
+          size: file.size || 0,
+          createdAt: Date.now()
+        });
+        resolve();
+      }
+    );
+  });
+}
+
+async function download(it){
+  toast('Download shuru...');
+  try{
+    const res = await fetch(it.url);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    const href = URL.createObjectURL(blob);
+    a.href = href;
+    a.download = it.name || 'file';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 15000);
+  }catch(e){
+    console.error(e);
+    window.open(it.url, '_blank');
+  }
+}
+
+async function remove(it){
+  if(!confirm('Ye file delete karni hai?')) return;
+  try{
+    if(it.path){ try{ await deleteObject(ref(storage, it.path)); }catch(e){ console.warn(e); } }
+    await deleteDoc(doc(db, 'files', it.id));
+    toast('Delete ho gaya');
+  }catch(e){
+    console.error(e);
+    toast('Delete fail hua');
+  }
+}
+
+['dragenter','dragover'].forEach(ev =>
+  document.addEventListener(ev, e => e.preventDefault())
+);
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  if(!READY) return;
+  if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length){
+    handleFiles(e.dataTransfer.files);
+  }
+});
+</script>
+</body>
+</html>
