@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Core HD Storage</title>
+    
+    <!-- Google Firebase Core SDKs -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+
+    <style>
+        /* CORE LIGHT THEME & CAPSULE UI */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        body { background-color: #ffffff; color: #000000; padding: 15px; padding-bottom: 120px; }
+        
+        /* Loader */
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 5px; background: #000; z-index: 9999; animation: load 1s infinite linear; }
+        @keyframes load { 0% { width: 0%; } 100% { width: 100%; } }
+
+        header { max-width: 600px; margin: 20px auto; text-align: left; }
+        header h1 { font-size: 26px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+
+        /* Capsule Drop Zone */
+        #drop-area { 
+            max-width: 600px; margin: 0 auto 30px auto; 
+            border: 2px solid #000000; border-radius: 50px; 
+            padding: 40px 20px; text-align: center; cursor: pointer; 
+            background: #ffffff; transition: 0.2s; 
+        }
+        #drop-area:active { background: #f0f0f0; transform: scale(0.98); }
+        #drop-area p { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        #file-picker { display: none; }
+
+        /* Stream Layout */
+        #feed-stream { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        
+        /* Capsule Cards */
+        .core-card { 
+            background: #fff; border: 2px solid #000; border-radius: 35px; 
+            padding: 18px; display: flex; flex-direction: column; gap: 15px; 
+            animation: popIn 0.3s ease; 
+        }
+        @keyframes popIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* HD Media Preview */
+        .media-hd { width: 100%; border-radius: 22px; border: 1.5px solid #000; max-height: 450px; object-fit: contain; background: #fff; display: block; }
+        .file-icon { font-size: 40px; text-align: center; padding: 40px; border: 2px dashed #000; border-radius: 22px; }
+
+        .meta-row { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+        .fname { font-weight: 800; font-size: 14px; text-transform: uppercase; max-width: 45%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        /* Capsule Buttons */
+        .btn-grp { display: flex; gap: 8px; }
+        .cap-btn { 
+            padding: 10px 20px; border-radius: 50px; border: 2px solid #000; 
+            background: #fff; color: #000; font-size: 11px; font-weight: 900; 
+            text-decoration: none; cursor: pointer; text-transform: uppercase; 
+            transition: 0.1s; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .cap-btn:active { background: #000; color: #fff; }
+
+        /* Giant Floating + Button */
+        #float-add { 
+            position: fixed; bottom: 30px; right: 30px; 
+            width: 70px; height: 70px; background: #000; color: #fff; 
+            border-radius: 50%; font-size: 40px; font-weight: 300; 
+            border: none; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            display: flex; align-items: center; justify-content: center; z-index: 100;
+        }
+        #float-add:active { transform: scale(0.9); }
+    </style>
+</head>
+<body>
+
+    <div id="loader"></div>
+    <header><h1>Core Feed</h1></header>
+
+    <div id="drop-area" onclick="document.getElementById('file-picker').click()">
+        <p>Tap to Upload HD File</p>
+        <input type="file" id="file-picker">
+    </div>
+
+    <div id="feed-stream"></div>
+    <button id="float-add" onclick="document.getElementById('file-picker').click()">+</button>
+
+    <script>
+        // --------------------------------------------------------------
+        // !!! IMPORTANT: PASTE YOUR FIREBASE KEYS BELOW !!!
+        // 1. Go to ://google.com
+        // 2. Create Project -> Web App -> Copy Config
+        // --------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "PASTE_YOUR_API_KEY_HERE",
+            authDomain: "PASTE_YOUR_PROJECT_://firebaseapp.com",
+            projectId: "PASTE_YOUR_PROJECT_ID",
+            storageBucket: "PASTE_YOUR_PROJECT_://appspot.com",
+            messagingSenderId: "PASTE_YOUR_SENDER_ID",
+            appId: "PASTE_YOUR_APP_ID"
+        };
+        // --------------------------------------------------------------
+
+        // Initialize Core Engine
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const storage = firebase.storage();
+            console.log("Core Connected: 100% Online");
+
+            const feedStream = document.getElementById('feed-stream');
+            const loader = document.getElementById('loader');
+
+            // 1. REAL-TIME LISTENER (Sabhi phones par auto-update)
+            db.collection("core_uploads").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                feedStream.innerHTML = ""; // Clean refresh
+                snapshot.forEach((doc) => {
+                    renderCard(doc.id, doc.data());
+                });
+            });
+
+            // 2. UPLOAD FUNCTION (100% HD)
+            document.getElementById('file-picker').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                loader.style.display = "block";
+                const storageRef = storage.ref(`uploads/${Date.now()}_${file.name}`);
+                
+                try {
+                    // Upload Raw File
+                    const snapshot = await storageRef.put(file);
+                    const url = await snapshot.ref.getDownloadURL();
+
+                    // Save Metadata to Database
+                    await db.collection("core_uploads").add({
+                        name: file.name,
+                        type: file.type,
+                        url: url,
+                        path: snapshot.ref.fullPath,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                } catch (err) {
+                    alert("Upload Error: " + err.message);
+                } finally {
+                    loader.style.display = "none";
+                }
+            });
+
+            // 3. RENDER UI ENGINE
+            function renderCard(docId, data) {
+                const card = document.createElement('div');
+                card.className = 'core-card';
+
+                // Media Type Check
+                let mediaHtml = '';
+                if (data.type.startsWith('image/')) {
+                    mediaHtml = `<img src="${data.url}" class="media-hd" loading="lazy">`;
+                } else if (data.type.startsWith('video/')) {
+                    mediaHtml = `<video src="${data.url}" class="media-hd" controls playsinline></video>`;
+                } else {
+                    mediaHtml = `<div class="file-icon">📄</div>`;
+                }
+
+                card.innerHTML = `
+                    ${mediaHtml}
+                    <div class="meta-row">
+                        <div class="fname">${data.name}</div>
+                        <div class="btn-grp">
+                            <a href="${data.url}" target="_blank" class="cap-btn" download>HD DOWN</a>
+                            <button onclick="deleteFile('${docId}', '${data.path}')" class="cap-btn">DELETE</button>
+                        </div>
+                    </div>
+                `;
+                feedStream.appendChild(card);
+            }
+
+            // 4. DELETE FUNCTION (Secure Removal)
+            window.deleteFile = async (docId, filePath) => {
+                if(!confirm("Permanently Delete?")) return;
+                try {
+                    await db.collection("core_uploads").doc(docId).delete(); // Remove from DB
+                    await storage.ref(filePath).delete(); // Remove from Storage
+                } catch (err) {
+                    console.log("Delete sync error, but removed from view.");
+                }
+            };
+
+        } catch (error) {
+            document.body.innerHTML = `<h2 style="text-align:center; margin-top:50px;">SETUP REQUIRED</h2><p style="text-align:center;">Open the code and paste your Firebase Config Keys to activate the Global Server.</p>`;
+        }
+    </script>
+</body>
+</html>
