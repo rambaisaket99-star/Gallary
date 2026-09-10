@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Core Storage</title>
+    <style>
+        /* Multi-Device Screen Normalization */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body { 
+            background-color: #ffffff; 
+            color: #000000; 
+            padding: 16px; 
+            padding-bottom: 140px; 
+        }
+        
+        header { 
+            max-width: 650px; 
+            margin: 25px auto 20px auto; 
+            text-align: left; 
+        }
+        header h1 { 
+            font-size: 26px; 
+            font-weight: 900; 
+            letter-spacing: -1px; 
+            color: #000000;
+        }
+        
+        /* Premium Capsule Drop/Upload Zone */
+        #drop-core { 
+            max-width: 650px; 
+            margin: 0 auto 30px auto; 
+            border: 2px solid #000000; 
+            border-radius: 50px; 
+            padding: 35px 20px; 
+            text-align: center; 
+            cursor: pointer; 
+            background: #ffffff;
+            transition: transform 0.1s ease, background 0.1s ease;
+        }
+        #drop-core:active { 
+            transform: scale(0.99);
+            background: #fdfdfd;
+        }
+        #drop-core p { 
+            font-size: 13px; 
+            font-weight: 800; 
+            letter-spacing: 1px;
+            color: #000000;
+        }
+        #hidden-input { 
+            display: none; 
+        }
+
+        /* Infinite Scroll Stream Grid */
+        #core-stream { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 25px; 
+        }
+        
+        /* High-Fidelity Capsulized Media Cards */
+        .media-card { 
+            background: #ffffff; 
+            border: 2px solid #000000; 
+            border-radius: 36px; 
+            padding: 18px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 16px;
+            animation: instantPop 0.2s cubic-bezier(0.1, 1, 0.1, 1);
+        }
+        
+        @keyframes instantPop {
+            0% { transform: translateY(10px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* 100% Pure HD Non-Compressed Previews */
+        .hd-engine { 
+            width: 100%; 
+            border-radius: 24px; 
+            background: #ffffff; 
+            border: 2px solid #000000; 
+            max-height: 450px; 
+            object-fit: contain; 
+            display: block; 
+        }
+        
+        .binary-box { 
+            width: 100%; 
+            padding: 45px 20px; 
+            text-align: center; 
+            border: 2px dashed #000000; 
+            border-radius: 24px; 
+            font-size: 36px; 
+            background: #ffffff;
+        }
+        
+        .card-meta { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%; 
+            padding: 0 6px;
+        }
+        .title-text { 
+            font-weight: 800; 
+            font-size: 13px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            max-width: 45%; 
+            color: #000000;
+        }
+        
+        /* Symmetrical Capsule Control Buttons */
+        .action-cluster { 
+            display: flex; 
+            gap: 8px; 
+        }
+        .capsule-action { 
+            padding: 10px 22px; 
+            border-radius: 50px; 
+            border: 2px solid #000000; 
+            background: #ffffff; 
+            color: #000000; 
+            font-size: 11px; 
+            font-weight: 900; 
+            text-decoration: none; 
+            cursor: pointer; 
+            letter-spacing: 0.5px; 
+            transition: background 0.1s ease, color 0.1s ease; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .capsule-action:active { 
+            background: #000000; 
+            color: #ffffff; 
+        }
+
+        /* Large Floating Multiuser Plus Icon */
+        #master-plus { 
+            position: fixed; 
+            bottom: 35px; 
+            right: 35px; 
+            width: 68px; 
+            height: 68px; 
+            background: #000000; 
+            color: #ffffff; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 40px; 
+            font-weight: 300; 
+            cursor: pointer; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15); 
+            z-index: 9999; 
+            border: none; 
+            transition: transform 0.1s ease;
+        }
+        #master-plus:active { 
+            transform: scale(0.90); 
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>PUBLIC CORE FEED</h1>
+    </header>
+
+    <!-- Master Upload Interface Trigger -->
+    <div id="drop-core">
+        <p>TAP OR DROP TO UPLOAD HD FILE</p>
+        <input type="file" id="hidden-input" multiple>
+    </div>
+
+    <!-- Live Multiuser Infinite View Stream -->
+    <div id="core-stream"></div>
+
+    <!-- Fixed Floating Plus Core Action -->
+    <button id="master-plus">+</button>
+
+    <script>
+        // High-Speed Multiuser Cloud Relay Network Integration
+        const SOCKET_RELAY = "wss://://piehost.com";
+        let networkSocket = null;
+
+        const dropCore = document.getElementById('drop-core');
+        const hiddenInput = document.getElementById('hidden-input');
+        const masterPlus = document.getElementById('master-plus');
+        const coreStream = document.getElementById('core-stream');
+
+        // Event hooks for structural binding
+        dropCore.addEventListener('click', () => hiddenInput.click());
+        masterPlus.addEventListener('click', () => hiddenInput.click());
+        hiddenInput.addEventListener('change', (e) => { if(e.target.files.length) initUploadEngine(e.target.files); });
+
+        // Drag & drop framework binding
+        dropCore.addEventListener('dragover', (e) => e.preventDefault());
+        dropCore.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length) initUploadEngine(e.dataTransfer.files);
+        });
+
+        // Local Storage Sync Layer (Bina time liye, 100% state backup)
+        let memoryCache = JSON.parse(localStorage.getItem('core_vault_cache')) || [];
+
+        // Connect Multi-User Socket Network instantly
+        function initializeNetwork() {
+            try {
+                networkSocket = new WebSocket(SOCKET_RELAY);
+                
+                networkSocket.onopen = () => {
+                    // Sync local data with online users instantly upon connection
+                    memoryCache.forEach(file => broadcastPacket({ type: 'SYNC_PUSH', data: file }));
+                };
+
+                networkSocket.onmessage = (event) => {
+                    const packet = JSON.parse(event.data);
+                    
+                    if (packet.type === 'SYNC_PUSH' || packet.type === 'NEW_UPLOAD') {
+                        injectCardToDOM(packet.data);
+                        saveToCache(packet.data);
+                    } else if (packet.type === 'DELETE_REQUEST') {
+                        executeUIRemoval(packet.id);
+                    }
+                };
+
+                networkSocket.onclose = () => setTimeout(initializeNetwork, 2000); // Auto reconnect if signal drops
+            } catch (err) {
+                console.log("Offline mode active.");
+            }
+        }
+
+        function broadcastPacket(data) {
+            if (networkSocket && networkSocket.readyState === WebSocket.OPEN) {
+                networkSocket.send(JSON.stringify(data));
+            }
+        }
+
+        // Processing Upload and converting to secure HD string without loss
+        function initUploadEngine(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const uniqueId = 'core-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    const filePayload = {
+                        id: uniqueId,
+                        name: file.name,
+                        type: file.type,
+                        raw: e.target.result // Pure uncompressed byte data string
+                    };
+
+                    // Insert locally instantly
+                    injectCardToDOM(filePayload);
+                    saveToCache(filePayload);
+
+                    // Broadcast instantly across all connected mobile networks worldwide
+                    broadcastPacket({ type: 'NEW_UPLOAD', data: filePayload });
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function saveToCache(file) {
+            if (!memoryCache.some(item => item.id === file.id)) {
+                memoryCache.unshift(file);
+                localStorage.setItem('core_vault_cache', JSON.stringify(memoryCache));
+            }
+        }
+
+        // Render card engine utilizing pure capsule curves
+        function injectCardToDOM(file) {
+            if (document.getElementById(file.id)) return;
+
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.id = file.id;
+
+            // Accurate Multi-format rendering blocks
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = file.raw;
